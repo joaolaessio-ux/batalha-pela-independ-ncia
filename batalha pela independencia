@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batalha pela Independência</title>
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --card-bg: #1e293b;
+      --accent-gold: #f59e0b;
+      --accent-red: #ef4444;
+      --accent-green: #10b981;
+      --accent-blue: #3b82f6;
+      --text-light: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 900px;
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: var(--accent-gold);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 10px rgba(245, 158, 11, 0.3);
+    }
+
+    /* Start Screen */
+    .map-container {
+      width: 100%;
+      max-width: 600px;
+      margin: 20px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid var(--accent-gold);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.2);
+    }
+
+    .map-container svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #0284c7;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+    }
+
+    .btn-primary {
+      background: var(--accent-gold);
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      background: #d97706;
+      transform: translateY(-2px);
+    }
+
+    .btn-danger {
+      background: var(--accent-red);
+      color: #fff;
+    }
+
+    .btn-danger:hover {
+      background: #dc2626;
+      transform: translateY(-2px);
+    }
+
+    /* Roulette Screen */
+    .roulette-wrapper {
+      position: relative;
+      width: 320px;
+      height: 320px;
+      margin: 20px auto;
+    }
+
+    .roulette-wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 6px solid var(--accent-gold);
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.4);
+      transition: transform 5s cubic-bezier(0.15, 0.9, 0.15, 1);
+      background: conic-gradient(
+        #ef4444 0deg 30deg, #3b82f6 30deg 60deg, #10b981 60deg 90deg, 
+        #f59e0b 90deg 120deg, #8b5cf6 120deg 150deg, #ec4899 150deg 180deg,
+        #06b6d4 180deg 210deg, #84cc16 210deg 240deg, #eab308 240deg 270deg,
+        #f97316 270deg 300deg, #6366f1 300deg 330deg, #14b8a6 330deg 360deg
+      );
+    }
+
+    .roulette-pointer {
+      position: absolute;
+      top: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-top: 25px solid var(--accent-gold);
+      z-index: 10;
+    }
+
+    .history-card {
+      background: rgba(15, 23, 42, 0.8);
+      border-left: 4px solid var(--accent-gold);
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+      text-align: left;
+      width: 100%;
+      display: none;
+    }
+
+    .history-card.active {
+      display: block;
+    }
+
+    .history-card h3 {
+      color: var(--accent-gold);
+      margin-bottom: 10px;
+    }
+
+    .history-card p {
+      margin: 6px 0;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    /* Weapon Cards */
+    .weapons-container {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    .weapon-card {
+      background: #334155;
+      border: 2px solid var(--accent-gold);
+      border-radius: 8px;
+      padding: 10px;
+      width: 130px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .weapon-card.selected {
+      border-color: var(--accent-green);
+      box-shadow: 0 0 10px var(--accent-green);
+      transform: scale(1.05);
+    }
+
+    .weapon-card.used {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .weapon-icon {
+      font-size: 1.8rem;
+      margin-bottom: 5px;
+    }
+
+    .weapon-name {
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .weapon-effect {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Positioning Board */
+    .board-container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      width: 100%;
+      margin: 20px 0;
+    }
+
+    .side-title {
+      font-weight: bold;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .slots-row {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .slot {
+      width: 100px;
+      height: 130px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 2px dashed #475569;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .slot.filled {
+      border-style: solid;
+      border-color: var(--accent-blue);
+      background: #1e293b;
+    }
+
+    .slot.cpu-slot {
+      border-color: var(--accent-red);
+    }
+
+    .soldier-badge {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--accent-gold);
+    }
+
+    .weapon-badge {
+      position: absolute;
+      bottom: 5px;
+      font-size: 0.75rem;
+      background: rgba(0,0,0,0.6);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .soldiers-dock {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .soldier-chip {
+      width: 50px;
+      height: 50px;
+      background: var(--accent-blue);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+      cursor: pointer;
+      border: 2px solid #fff;
+    }
+
+    .soldier-chip.used {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    /* Battle Screen */
+    .battle-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 15px;
+      margin: 10px 0;
+      padding: 10px;
+      background: rgba(15, 23, 42, 0.4);
+      border-radius: 8px;
+      width: 100%;
+    }
+
+    .battle-card {
+      width: 90px;
+      height: 110px;
+      background: #1e293b;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #475569;
+    }
+
+    .battle-card.player { border-color: var(--accent-blue); }
+    .battle-card.cpu { border-color: var(--accent-red); }
+
+    .vs-badge {
+      font-weight: bold;
+      color: var(--accent-gold);
+    }
+
+    .result-text {
+      width: 150px;
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+
+    .winner { color: var(--accent-green); }
+    .loser { color: var(--accent-red); }
+    .draw { color: var(--accent-gold); }
+
+    /* Result Modal */
+    .final-score {
+      font-size: 2rem;
+      margin: 20px 0;
+      color: var(--accent-gold);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. TELA INICIAL -->
+  <div id="screen-start" class="screen active">
+    <h1>Batalha pela Independência</h1>
+    <div class="map-container">
+      <svg viewBox="0 0 1000 500">
+        <path d="M150,150 Q200,100 250,150 T350,150 T450,200" fill="none" stroke="#22c55e" stroke-width="40" opacity="0.3"/>
+        <path d="M700,150 Q800,100 850,200 T750,300" fill="none" stroke="#22c55e" stroke-width="50" opacity="0.3"/>
+        <text x="500" y="250" fill="#ffffff" font-size="28" text-anchor="middle" font-weight="bold">MAPA MÚNDI</text>
+      </svg>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-primary" onclick="startRoulettePhase()">Iniciar</button>
+      <button class="btn btn-danger" onclick="exitGame()">Sair</button>
+    </div>
+  </div>
+
+  <!-- 2. TELA DA ROLETA -->
+  <div id="screen-roulette" class="screen">
+    <h1>Sorteio de Nação</h1>
+    <div class="roulette-wrapper">
+      <div class="roulette-pointer"></div>
+      <div id="wheel" class="roulette-wheel"></div>
+    </div>
+    <button id="spin-btn" class="btn btn-primary" onclick="spinWheel()">Girar Roleta</button>
+
+    <div id="history-card" class="history-card">
+      <h3 id="country-name">País</h3>
+      <p><strong>Ano da Independência:</strong> <span id="indep-year"></span></p>
+      <p><strong>Oponente Principal:</strong> <span id="rival-name"></span></p>
+      <p id="country-story" style="margin-top: 10px; color: var(--text-muted);"></p>
+      <button class="btn btn-primary" style="margin-top: 15px;" onclick="goToArmory()">Avançar para Estratégia</button>
+    </div>
+  </div>
+
+  <!-- 3. TELA DE ARMAS E POSICIONAMENTO -->
+  <div id="screen-positioning" class="screen">
+    <h1>Posicionamento Tático</h1>
+    
+    <p>Suas Armas Sorteadas (Clique para selecionar e depois em um soldado):</p>
+    <div id="player-weapons" class="weapons-container"></div>
+
+    <div class="board-container">
+      <div>
+        <div class="side-title">Seus Soldados</div>
+        <div class="slots-row" id="player-slots">
+          <div class="slot" onclick="placeOnSlot(0)"><span class="soldier-badge">1</span></div>
+          <div class="slot" onclick="placeOnSlot(1)"><span class="soldier-badge">2</span></div>
+          <div class="slot" onclick="placeOnSlot(2)"><span class="soldier-badge">3</span></div>
+          <div class="slot" onclick="placeOnSlot(3)"><span class="soldier-badge">4</span></div>
+          <div class="slot" onclick="placeOnSlot(4)"><span class="soldier-badge">5</span></div>
+        </div>
+      </div>
+    </div>
+
+    <p>Escolha a ordem dos seus soldados (1 a 5):</p>
+    <div class="soldiers-dock" id="soldiers-dock"></div>
+
+    <button id="start-battle-btn" class="btn btn-primary" style="margin-top:20px; display:none;" onclick="startBattle()">Iniciar Batalha</button>
+  </div>
+
+  <!-- 4. TELA DE BATALHA -->
+  <div id="screen-battle" class="screen">
+    <h1>Confronto Final</h1>
+    <div id="battle-board" style="width: 100%;"></div>
+    <div id="final-result-card" style="display:none; margin-top:20px;">
+      <div class="final-score" id="final-score-text"></div>
+      <button class="btn btn-primary" onclick="resetGame()">Jogar Novamente</button>
+    </div>
+  </div>
+
+  <script>
+    // LISTA UNIFORME DOS 193 PAÍSES DA ONU
+    const countriesData = [
+      { name: "Afeganistão", year: "1919", rival: "Império Britânico", story: "Após três guerras anglo-afegãs, o tratado de Rawalpindi em 1919 garantiu a independência e controle total de sua política externa." },
+      { name: "África do Sul", year: "1910", rival: "Império Britânico", story: "Unificação de colônias britânicas e repúblicas bôeres resultando no Domínio da União Sul-Africana." },
+      { name: "Albânia", year: "1912", rival: "Império Otomano", story: "Declarou independência durante a Primeira Guerra Balcânica encerrando séculos de domínio otomano." },
+      { name: "Alemanha", year: "1871", rival: "Império Francês", story: "A unificação alemã foi consolidada na Galeria dos Espelhos em Versalhes após a vitória na Guerra Franco-Prussiana." },
+      { name: "Andorra", year: "1278", rival: "Coroa de Aragão", story: "Estabelecida pelo Paréage de 1278 entre o Bispo de Urgell e o Conde de Foix." },
+      { name: "Angola", year: "1975", rival: "Portugal", story: "Conquistada após a Guerra de Independência e o fim do regime do Estado Novo em Portugal." },
+      { name: "Antígua e Barbuda", year: "1981", rival: "Império Britânico", story: "Luta liderada por movimentos trabalhistas e maroons até o reconhecimento pacífico definitivo." },
+      { name: "Arábia Saudita", year: "1932", rival: "Império Otomano", story: "Unificação dos reinos de Nejd e Hejaz sob a liderança de Ibn Saud." },
+      { name: "Argélia", year: "1962", rival: "França", story: "Alcançada após uma intensa e sangrenta Guerra de Libertação Nacional (1954–1962)." },
+      { name: "Argentina", year: "1816", rival: "Império Espanhol", story: "Proclamada no Congresso de Tucumán após a Revolução de Maio de 1810." },
+      { name: "Armênia", year: "1991", rival: "União Soviética (URSS)", story: "Declaração de independência confirmada com a dissolução da União Soviética em 1991." },
+      { name: "Austrália", year: "1901", rival: "Império Britânico", story: "Federação das seis colônias britânicas autogovernadas no Commonwealth da Austrália." },
+      { name: "Áustria", year: "1955", rival: "Império Alemão", story: "Restauração da soberania total através do Tratado do Estado Austríaco após a Segunda Guerra Mundial." },
+      { name: "Azerbaijão", year: "1991", rival: "União Soviética (URSS)", story: "Restabeleceu sua independência após a queda da URSS." },
+      { name: "Bahamas", year: "1973", rival: "Império Britânico", story: "Independência obtida após décadas de resistência anticolonial e negociações diretas com Londres." },
+      { name: "Bangladesh", year: "1971", rival: "Paquistão", story: "Conquistada na Guerra de Libertação de Bangladesh com apoio militar indiano." },
+      { name: "Barbados", year: "1966", rival: "Império Britânico", story: "Conquistada após séculos de resistência iniciada com a Revolta de Bussa em 1816." },
+      { name: "Bahrein", year: "1971", rival: "Império Britânico", story: "Encerramento do status de protetorado britânico no Golfo Pérsico." },
+      { name: "Bélgica", year: "1830", rival: "Reino Unido dos Países Baixos", story: "Revolução Belga de 1830 que separou as províncias do sul dos Países Baixos." },
+      { name: "Belize", year: "1981", rival: "Império Britânico", story: "Resistência militar e diplomática contra reinvindicações territoriais da Guatemala e domínio britânico." },
+      { name: "Benin", year: "1960", rival: "França", story: "Conhecido como Dahomey, obteve independência no processo de descolonização da África Ocidental Francesa." },
+      { name: "Bielorrússia", year: "1991", rival: "União Soviética (URSS)", story: "Declaração de soberania emitida em 1990 e independência completa em 1991." },
+      { name: "Bolívia", year: "1825", rival: "Império Espanhol", story: "Proclamada por Antonio José de Sucre e Simón Bolívar após as batalhas de Junín e Ayacucho." },
+      { name: "Bósnia e Herzegovina", year: "1992", rival: "Iugoslávia", story: "Declarou independência em 1992 desencadeando a Guerra da Bósnia." },
+      { name: "Botsuana", year: "1966", rival: "Império Britânico", story: "Transição pacífica do protetorado de Bechuanalândia para uma república independente." },
+      { name: "Brasil", year: "1822", rival: "Reino Unido de Portugal", story: "Proclamada por D. Pedro I às margens do riacho Ipiranga e consolidada na Guerra de Independência." },
+      { name: "Brunei", year: "1984", rival: "Império Britânico", story: "Fim do tratado de proteção com o Reino Unido." },
+      { name: "Bulgária", year: "1908", rival: "Império Otomano", story: "Declaração de independência total do Império Otomano durante a crise bósnia." },
+      { name: "Burkina Faso", year: "1960", rival: "França", story: "Antigo Alto Volta, independente no processo de descolonização francesa." },
+      { name: "Burundi", year: "1962", rival: "Bélgica", story: "Fim do mandato da ONU administrado pela Bélgica." },
+      { name: "Butão", year: "1907", rival: "Império Britânico", story: "Consolidação da monarquia e independência formal com tratados de amizade." },
+      { name: "Cabo Verde", year: "1975", rival: "Portugal", story: "Luta de libertação conduzida pelo PAIGC contra o colonialismo português." },
+      { name: "Camarões", year: "1960", rival: "França", story: "Guerra de libertação travada pela UPC contra as forças coloniais francesas." },
+      { name: "Camboja", year: "1953", rival: "França", story: "Independência concedida por França durante a Primeira Guerra da Indochina." },
+      { name: "Canadá", year: "1867", rival: "Império Britânico", story: "Confederação Canadense criada pelo Ato da América do Norte Britânica." },
+      { name: "Catar", year: "1971", rival: "Império Britânico", story: "Fim da presença militar e dos acordos de proteção britânicos no Golfo." },
+      { name: "Cazaquistão", year: "1991", rival: "União Soviética (URSS)", story: "Última república soviética a declarar independência em dezembro de 1991." },
+      { name: "Chade", year: "1960", rival: "França", story: "Independência obtida sob a liderança de François Tombalbaye." },
+      { name: "Chile", year: "1818", rival: "Império Espanhol", story: "Consolidada por Bernardo O'Higgins e José de San Martín na Batalha de Maipú." },
+      { name: "China", year: "1949", rival: "Império do Japão", story: "Fundação da República Popular da China após a Guerra de Resistência contra o Japão e guerra civil." },
+      { name: "Chipre", year: "1960", rival: "Império Britânico", story: "Luta armada travada pela organização EOKA contra as forças britânicas." },
+      { name: "Colômbia", year: "1810", rival: "Império Espanhol", story: "Grito de independência em Bogotá consolidado por Simón Bolívar em Boyacá (1819)." },
+      { name: "Comores", year: "1975", rival: "França", story: "Declaração unilateral de independência do arquipélago." },
+      { name: "Congo-Brazzaville", year: "1960", rival: "França", story: "Independência do antigo Congo Francês." },
+      { name: "Coreia do Norte", year: "1945", rival: "Império do Japão", story: "Libertação da ocupação colonial japonesa ao fim da Segunda Guerra Mundial." },
+      { name: "Coreia do Sul", year: "1945", rival: "Império do Japão", story: "Fim da dominação colonial japonesa em 1945." },
+      { name: "Costa do Marfim", year: "1960", rival: "França", story: "Liderada por Félix Houphouët-Boigny na descolonização francesa." },
+      { name: "Costa Rica", year: "1821", rival: "Império Espanhol", story: "Independência da América Central declarada na Guatemala." },
+      { name: "Croácia", year: "1991", rival: "Iugoslávia", story: "Declaração de independência seguidade pela Guerra de Independência Croata." },
+      { name: "Cuba", year: "1902", rival: "Império Espanhol", story: "Guerra de Independência de Cuba e posterior fim da ocupação dos EUA." },
+      { name: "Dinamarca", year: "0928", rival: "Império Carolíngio", story: "Unificação dos reinos dinamarqueses sob Harald Dente-Azul." },
+      { name: "Djibuti", year: "1977", rival: "França", story: "Independência do antigo Território Francês dos Afars e dos Issas." },
+      { name: "Dominica", year: "1978", rival: "Império Britânico", story: "Transição de estado associado para república independente." },
+      { name: "Egito", year: "1922", rival: "Império Britânico", story: "Declaração Unilateral de Independência emitida pelo Reino Unido após a Revolução de 1919." },
+      { name: "El Salvador", year: "1821", rival: "Império Espanhol", story: "Independência conjunta da Capitania-Geral da Guatemala." },
+      { name: "Emirados Árabes Unidos", year: "1971", rival: "Império Britânico", story: "Unificação dos sete emirados do Trucial Oman após retirada britânica." },
+      { name: "Equador", year: "1822", rival: "Império Espanhol", story: "Garantida por Antonio José de Sucre na Batalha de Pichincha." },
+      { name: "Eritreia", year: "1993", rival: "Etiópia", story: "Conquistada após 30 anos de guerra de libertação contra o domínio etíope/italiano." },
+      { name: "Eslováquia", year: "1993", rival: "Tchecoslováquia", story: "Separação pacífica conhecida como a Revolução de Veludo." },
+      { name: "Eslovênia", year: "1991", rival: "Iugoslávia", story: "Independência conquistada após a Guerra dos Dez Dias." },
+      { name: "Espanha", year: "1492", rival: "Califado de Córdoba", story: "Conclusão da Reconquista com a tomada de Granada pelos Reis Católicos." },
+      { name: "Estados Unidos", year: "1776", rival: "Império Britânico", story: "Declaração das 13 Colônias consolidada na Guerra de Independência Americana." },
+      { name: "Estônia", year: "1991", rival: "União Soviética (URSS)", story: "Restauração da independência através da Revolução do Canto." },
+      { name: "Eswatini", year: "1968", rival: "Império Britânico", story: "Independência sob o reinado de Sobhuza II." },
+      { name: "Etiópia", year: "1941", rival: "Império Italiano", story: "Libertação da ocupação fascista italiana durante a Segunda Guerra Mundial." },
+      { name: "Fiji", year: "1970", rival: "Império Britânico", story: "Fim do domínio colonial britânico." },
+      { name: "Filipinas", year: "1898", rival: "Império Espanhol", story: "Revolução Filipina e declaração de independência de Espanha." },
+      { name: "Finlândia", year: "1917", rival: "Império Russo", story: "Declarada durante a Revolução Russa de 1917." },
+      { name: "França", year: "0843", rival: "Império Carolíngio", story: "Divisão do Império Carolíngio pelo Tratado de Verdun criando a Franca Ocidental." },
+      { name: "Gabão", year: "1960", rival: "França", story: "Independência no processo de descolonização da África Equatorial Francesa." },
+      { name: "Gâmbia", year: "1965", rival: "Império Britânico", story: "Independência sob a liderança de Dawda Jawara." },
+      { name: "Gana", year: "1957", rival: "Império Britânico", story: "Primeira nação da África subsaariana a obter independência, liderada por Kwame Nkrumah." },
+      { name: "Geórgia", year: "1991", rival: "União Soviética (URSS)", story: "Aprovada em referendo após manifestações em Tbilisi." },
+      { name: "Granada", year: "1974", rival: "Império Britânico", story: "Movimento de independência liderado por Eric Gairy." },
+      { name: "Grécia", year: "1821", rival: "Império Otomano", story: "Guerra de Independência Grega apoiada pelas potências europeias." },
+      { name: "Guatemala", year: "1821", rival: "Império Espanhol", story: "Declaração de Independência da América Central." },
+      { name: "Guiana", year: "1966", rival: "Império Britânico", story: "Fim do domínio colonial na antiga Guiana Britânica." },
+      { name: "Guiné", year: "1958", rival: "França", story: "Única colônia a rejeitar a Comunidade Francesa no referendo liderado por Ahmed Sékou Touré." },
+      { name: "Guiné-Bissau", year: "1973", rival: "Portugal", story: "Guerra de libertação movida pelo PAIGC de Amílcar Cabral." },
+      { name: "Guiné Equatorial", year: "1968", rival: "Espanha", story: "Independência concedida pela Espanha franquista." },
+      { name: "Haiti", year: "1804", rival: "Império Francês", story: "Primeira revolução de escravizados vitoriosa no mundo liderada por Toussaint Louverture e Jean-Jacques Dessalines." },
+      { name: "Honduras", year: "1821", rival: "Império Espanhol", story: "Independência conjunta da Capitania-Geral da Guatemala." },
+      { name: "Hungria", year: "1918", rival: "Império Império Áustro-Húngaro", story: "Dissolução da monarquia dual após a Primeira Guerra Mundial." },
+      { name: "Iêmen", year: "1967", rival: "Império Britânico", story: "Retirada britânica de Áden após insurgência armada." },
+      { name: "Ilhas Marshall", year: "1986", rival: "Estados Unidos", story: "Livre associação após período de protetorado da ONU administrado pelos EUA." },
+      { name: "Ilhas Salomão", year: "1978", rival: "Império Britânico", story: "Autogoverno e independência do protetorado britânico." },
+      { name: "Índia", year: "1947", rival: "Império Britânico", story: "Movimento de não-violência de Gandhi e resistência armada do Exército Nacional Indiano." },
+      { name: "Indonésia", year: "1945", rival: "Império Holandês", story: "Proclamada por Sukarno e seguida de 4 anos de guerra de revolução nacional." },
+      { name: "Irã", year: "1501", rival: "Império Timúrida", story: "Estabelecimento do Império Safávida por Shah Ismail I." },
+      { name: "Iraque", year: "1932", rival: "Império Britânico", story: "Fim do Mandato Britânico da Mesopotâmia." },
+      { name: "Irlanda", year: "1919", rival: "Império Britânico", story: "Guerra de Independência Irlandesa travada pelo IRA e Tratado Anglo-Irlandês." },
+      { name: "Islândia", year: "1944", rival: "Dinamarca", story: "Fundação da República enquanto a Dinamarca estava ocupada na Segunda Guerra Mundial." },
+      { name: "Israel", year: "1948", rival: "Império Britânico", story: "Declaração de independência ao fim do Mandato Britânico da Palestina." },
+      { name: "Itália", year: "1861", rival: "Império Austríaco", story: "Processo de Unificação Italiana (Risorgimento) liderado por Garibaldi e Cavour." },
+      { name: "Jamaica", year: "1962", rival: "Império Britânico", story: "Histórico de resistência das Guerras Maroon e Revolta de Sam Sharpe culminando na independência." },
+      { name: "Japão", year: "0660 a.C.", rival: "Nenhum (Nativo)", story: "Tradição de fundação lendária pelo Imperador Jimmu." },
+      { name: "Jordânia", year: "1946", rival: "Império Britânico", story: "Fim do Mandato Britânico da Transjordânia." },
+      { name: "Kiribati", year: "1979", rival: "Império Britânico", story: "Independência das antigas Ilhas Gilbert." },
+      { name: "Kuwait", year: "1961", rival: "Império Britânico", story: "Fim do tratado de proteção de 1899 com a Grã-Bretanha." },
+      { name: "Laos", year: "1953", rival: "França", story: "Independência obtida na Primeira Guerra da Indochina." },
+      { name: "Lesoto", year: "1966", rival: "Império Britânico", story: "Independência do antigo protetorado de Basutolândia." },
+      { name: "Letônia", year: "1991", rival: "União Soviética (URSS)", story: "Restauração da independência após o colapso soviético." },
+      { name: "Líbano", year: "1943", rival: "França", story: "Fim do Mandato Francês durante a Segunda Guerra Mundial." },
+      { name: "Libéria", year: "1847", rival: "EUA (American Colonization Society)", story: "Fundada por ex-escravizados libertos vindos dos Estados Unidos." },
+      { name: "Líbia", year: "1951", rival: "Império Italiano", story: "Independência sob o Rei Idris após a perda italiana na Segunda Guerra Mundial." },
+      { name: "Liechtenstein", year: "1806", rival: "Sacro Império Romano", story: "Dissolução do Sacro Império Romano Germânico por Napoleão." },
+      { name: "Lituânia", year: "1991", rival: "União Soviética (URSS)", story: "Primeira república soviética a declarar restauração de independência em 1990." },
+      { name: "Luxemburgo", year: "1839", rival: "Reino Unido dos Países Baixos", story: "Tratado de Londres garante soberania total." },
+      { name: "Macedônia do Norte", year: "1991", rival: "Iugoslávia", story: "Separação pacífica da Iugoslávia por referendo." },
+      { name: "Madagascar", year: "1960", rival: "França", story: "Precedida pela sangrenta Insurreição Malgaxe de 1947 contra o domínio francês." },
+      { name: "Malásia", year: "1957", rival: "Império Britânico", story: "Independência da Federação da Malásia durante a Emergência Malaia." },
+      { name: "Malaui", year: "1964", rival: "Império Britânico", story: "Fim do protetorado de Niassalândia." },
+      { name: "Maldivas", year: "1965", rival: "Império Britânico", story: "Fim do acordo de proteção britânico." },
+      { name: "Mali", year: "1960", rival: "França", story: "Desintegração da Federação do Mali formada com o Senegal." },
+      { name: "Malta", year: "1964", rival: "Império Britânico", story: "Independência concedida pelo Ato de Malta no Parlamento Britânico." },
+      { name: "Marrocos", year: "1956", rival: "França", story: "Fim dos protetorados francês e espanhol após lutas do Exército de Libertação." },
+      { name: "Maurício", year: "1968", rival: "Império Britânico", story: "Liderada por Seewoosagur Ramgoolam." },
+      { name: "Mauritânia", year: "1960", rival: "França", story: "Independência do antigo território colonial da África Ocidental Francesa." },
+      { name: "México", year: "1821", rival: "Império Espanhol", story: "Iniciada por Miguel Hidalgo em 1810 e concluída pelo Plano de Iguala e Exército Trigarante." },
+      { name: "Micronésia", year: "1986", rival: "Estados Unidos", story: "Livre Associação com os EUA." },
+      { name: "Moçambique", year: "1975", rival: "Portugal", story: "Guerra de Libertação travada pela FRELIMO liderada por Samora Machel." },
+      { name: "Moldávia", year: "1991", rival: "União Soviética (URSS)", story: "Declaração de independência após o fracasso do golpe de estado em Moscou." },
+      { name: "Mônaco", year: "1297", rival: "República de Gênova", story: "Tomada do rochedo de Mônaco por François Grimaldi." },
+      { name: "Mongólia", year: "1911", rival: "Dinastia Qing (China)", story: "Queda da dinastia Qing e restauração da autonomia nômade." },
+      { name: "Montenegro", year: "2006", rival: "Iugoslávia", story: "Dissolução final da união estatal com a Sérvia após referendo." },
+      { name: "Mianmar", year: "1948", rival: "Império Britânico", story: "Liderada pelo herói nacional General Aung San." },
+      { name: "Namíbia", year: "1990", rival: "África do Sul", story: "Guerra de Libertação travada pela SWAPO e fim da ocupação sul-africana." },
+      { name: "Nauru", year: "1968", rival: "Império Britânico", story: "Fim do mandato tripartite de Austrália, Nova Zelândia e Reino Unido." },
+      { name: "Nepal", year: "1768", rival: "Nenhum (Nativo)", story: "Unificação de reinos pelo Rei Prithvi Narayan Shah." },
+      { name: "Nicarágua", year: "1821", rival: "Império Espanhol", story: "Independência conjunta do Reino da Guatemala." },
+      { name: "Níger", year: "1960", rival: "França", story: "Fim do domínio colonial francês." },
+      { name: "Nigéria", year: "1960", rival: "Império Britânico", story: "Federação independente criada por Ato do Parlamento Britânico." },
+      { name: "Noruega", year: "1905", rival: "Suécia", story: "Dissolução pacífica da união pessoal entre Suécia e Noruega." },
+      { name: "Nova Zelândia", year: "1907", rival: "Império Britânico", story: "Evolução do Tratado de Waitangi de 1840 até a condição de Domínio." },
+      { name: "Omã", year: "1650", rival: "Império Português", story: "Expulsão dos portugueses de Mascate pela Dinastia Ya'rubi." },
+      { name: "Países Baixos", year: "1581", rival: "Império Espanhol", story: "Guerra dos Oitenta Anos e Plakkaat van Verlatinghe contra Filipe II." },
+      { name: "Palau", year: "1994", rival: "Estados Unidos", story: "Fim do protetorado das Nações Unidas sob administração americana." },
+      { name: "Panamá", year: "1903", rival: "Colômbia", story: "Separação da Colômbia com apoio dos EUA para construção do Canal." },
+      { name: "Papua Nova Guiné", year: "1975", rival: "Austrália", story: "Transferência de administração da Austrália." },
+      { name: "Paquistão", year: "1947", rival: "Império Britânico", story: "Partição da Índia Britânica motivada pela Liga Muçulmana de Muhammad Ali Jinnah." },
+      { name: "Paraguai", year: "1811", rival: "Império Espanhol", story: "Revolução de Maio liderada por José Gaspar Rodríguez de Francia sem derramamento de sangue." },
+      { name: "Peru", year: "1821", rival: "Império Espanhol", story: "Proclamada por José de San Martín e selada na Batalha de Ayacucho por Sucre em 1824." },
+      { name: "Polônia", year: "1918", rival: "Império Alemão", story: "Restauração da Polônia após 123 anos de partilha entre Alemanha, Rússia e Áustria." },
+      { name: "Portugal", year: "1139", rival: "Reino de Leão", story: "Proclamação de D. Afonso Henriques após a Batalha de Ourique." },
+      { name: "Quênia", year: "1963", rival: "Império Britânico", story: "Revolta dos Mau-Mau contra o domínio colonial britânico." },
+      { name: "Quirguistão", year: "1991", rival: "União Soviética (URSS)", story: "Declaração de soberania estadual em 1991." },
+      { name: "Reino Unido", year: "0927", rival: "Vikings", story: "Unificação dos reinos anglo-saxões por Athelstan." },
+      { name: "República Centro-Africana", year: "1960", rival: "França", story: "Liderada por Barthélemy Boganda na descolonização." },
+      { name: "República Tcheca", year: "1993", rival: "Tchecoslováquia", story: "Divisão amigável da Tchecoslováquia." },
+      { name: "República Democrática do Congo", year: "1960", rival: "Bélgica", story: "Liderada por Patrice Lumumba após dura exploração colonial." },
+      { name: "República Dominicana", year: "1844", rival: "Haiti", story: "Guerra de Independência Dominicana liderada por Juan Pablo Duarte contra ocupação haitiana." },
+      { name: "Romênia", year: "1877", rival: "Império Otomano", story: "Guerra de Independência Romeno-Otomana." },
+      { name: "Ruanda", year: "1962", rival: "Bélgica", story: "Revolução Social de 1959 e fim da administração belga." },
+      { name: "Rússia", year: "1991", rival: "União Soviética (URSS)", story: "Declaração de soberania da RSFS Russa liderada por Boris Yeltsin." },
+      { name: "Samoa", year: "1962", rival: "Nova Zelândia", story: "Anos de resistência pacífica anticolonial movidos pelo movimento Mau." },
+      { name: "Santa Lúcia", year: "1979", rival: "Império Britânico", story: "Independência do status de estado associado." },
+      { name: "São Cristóvão e Nevis", year: "1983", rival: "Império Britânico", story: "Último território do Caribe a obter independência do Reino Unido." },
+      { name: "São Marino", year: "0301", rival: "Império Romano", story: "Fundado por São Marino como comunidade cristã livre." },
+      { name: "São Tomé e Príncipe", year: "1975", rival: "Portugal", story: "Movimento de libertação MLSTP liderado por Manuel Pinto da Costa." },
+      { name: "São Vicente e Granadinas", year: "1979", rival: "Império Britânico", story: "Transição final para soberania no Caribe." },
+      { name: "Seychelles", year: "1976", rival: "Império Britânico", story: "Independência republicana no Oceano Índico." },
+      { name: "Senegal", year: "1960", rival: "França", story: "Liderado pelo poeta e estadista Léopold Sédar Senghor." },
+      { name: "Sérvia", year: "1878", rival: "Império Otomano", story: "Reconhecimento internacional no Tratado de Berlim após insurreições." },
+      { name: "Serra Leoa", year: "1961", rival: "Império Britânico", story: "Liderada por Milton Margai." },
+      { name: "Cingapura", year: "1965", rival: "Malásia", story: "Expulsão da Federação da Malásia proclamada por Lee Kuan Yew." },
+      { name: "Síria", year: "1946", rival: "França", story: "Evacuação das tropas francesas do Mandato da Síria." },
+      { name: "Somália", year: "1960", rival: "Império Britânico", story: "União da Somália Britânica e Somália Italiana." },
+      { name: "Sri Lanka", year: "1948", rival: "Império Britânico", story: "Antigo Ceilão, independência obtida pacificamente." },
+      { name: "Sudão", year: "1956", rival: "Império Britânico", story: "Fim do domínio anglo-egípcio." },
+      { name: "Sudão do Sul", year: "2011", rival: "Sudão", story: "Resultado de referendo após décadas de guerra civil contra o Sudão." },
+      { name: "Suécia", year: "1523", rival: "União de Kalmar (Dinamarca)", story: "Revolta liderada por Gustav Vasa libertando a Suécia do domínio dinamarquês." },
+      { name: "Suíça", year: "1291", rival: "Império Habsburgo", story: "Pacto Federal das três cantões originais contra os Habsburgos." },
+      { name: "Suriname", year: "1975", rival: "Império Holandês", story: "Liderado por Henck Arron e Partido Nacional do Suriname." },
+      { name: "Tailândia", year: "1238", rival: "Império Khmer", story: "Fundação do Reino de Sukhothai; nunca foi colonizada por potências européias." },
+      { name: "Tajiquistão", year: "1991", rival: "União Soviética (URSS)", story: "Declaração de independência com o colapso soviético." },
+      { name: "Tanzânia", year: "1961", rival: "Império Britânico", story: "Julius Nyerere lidera a independência de Tanganica (depois unida a Zanzibar)." },
+      { name: "Timor-Leste", year: "2002", rival: "Indonésia", story: "Luta liderada pela FALINTIL/FRETILIN contra ocupação indonésia iniciada em 1975." },
+      { name: "Togo", year: "1960", rival: "França", story: "Fim do mandato da ONU administrado pela França." },
+      { name: "Tonga", year: "1970", rival: "Império Britânico", story: "Fim do status de estado protegido mantendo monarquia nativa." },
+      { name: "Trinidad e Tobago", year: "1962", rival: "Império Britânico", story: "Histórico de levantes trabalhistas e Canboulay Riots culminando na independência." },
+      { name: "Tunísia", year: "1956", rival: "França", story: "Liderada por Habib Bourguiba e pelo partido Neo-Destour." },
+      { name: "Turcomenistão", year: "1991", rival: "União Soviética (URSS)", story: "Aprovada em referendo popular em 1991." },
+      { name: "Turquia", year: "1923", rival: "Império Otomano", story: "Guerra de Independência Turca liderada por Mustafa Kemal Atatürk." },
+      { name: "Tuvalu", year: "1978", rival: "Império Britânico", story: "Separação das Ilhas Ellice das Ilhas Gilbert." },
+      { name: "Ucrânia", year: "1991", rival: "União Soviética (URSS)", story: "Declaração de independência aprovada por 92% em referendo." },
+      { name: "Uganda", year: "1962", rival: "Império Britânico", story: "Liderada por Milton Obote." },
+      { name: "Uruguai", year: "1828", rival: "Império do Brasil", story: "Cruzada Libertadora dos 33 Orientais de Lavalleja libertando da anexação brasileira/cisplatina." },
+      { name: "Uzbequistão", year: "1991", rival: "União Soviética (URSS)", story: "Proclamada por Islam Karimov em agosto de 1991." },
+      { name: "Vanuatu", year: "1980", rival: "Império Britânico", story: "Guerra do Espírito Santo e fim do condomínio franco-britânico das Novas Hébridas." },
+      { name: "Vaticano", year: "1929", rival: "Itália", story: "Tratado de Latrão assinado com o Reino da Itália." },
+      { name: "Venezuela", year: "1811", rival: "Império Espanhol", story: "Primeira nação hispânica a declarar independência, consolidada por Bolívar em Carabobo." },
+      { name: "Vietnã", year: "1945", rival: "Império Francês", story: "Declaração por Ho Chi Minh e vitória na Guerra da Indochina em Điện Biên Phủ." },
+      { name: "Zâmbia", year: "1964", rival: "Império Britânico", story: "Antiga Rodésia do Norte, liderada por Kenneth Kaunda." },
+      { name: "Zimbábue", year: "1980", rival: "Império Britânico", story: "Guerra de Libertação (Chimurenga) contra o regime minoria da Rodésia do Sul." }
+    ];
+
+    const weaponTypes = [
+      { id: "lança", name: "Lança", icon: "🗡️", effect: "+1 Ponto", val: 1, type: "buff" },
+      { id: "pistola", name: "Pistola", icon: "🔫", effect: "+2 Pontos", val: 2, type: "buff" },
+      { id: "ak47", name: "AK-47", icon: "🛡️", effect: "Vitória Direta", val: 0, type: "win" },
+      { id: "metralhadora", name: "Metralhadora", icon: "💥", effect: "-3 Oponente", val: -3, type: "debuff" }
+    ];
+
+    let gameState = {
+      selectedCountry: null,
+      playerWeapons: [],
+      cpuWeapons: [],
+      playerSlots: [null, null, null, null, null],
+      playerWeaponSlots: [null, null, null, null, null],
+      cpuSlots: [1, 2, 3, 4, 5],
+      cpuWeaponSlots: [null, null, null, null, null],
+      selectedWeaponIndex: null,
+      dockUsed: [false, false, false, false, false]
+    };
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function exitGame() {
+      alert("Obrigado por jogar!");
+      window.close();
+    }
+
+    function startRoulettePhase() {
+      showScreen('screen-roulette');
+      document.getElementById('history-card').classList.remove('active');
+      document.getElementById('spin-btn').style.display = 'inline-block';
+    }
+
+    function spinWheel() {
+      const wheel = document.getElementById('wheel');
+      const btn = document.getElementById('spin-btn');
+      btn.style.display = 'none';
+
+      // Sorteio 100% Uniforme entre os 193
+      const randomIndex = Math.floor(Math.random() * countriesData.length);
+      gameState.selectedCountry = countriesData[randomIndex];
+
+      const randomRounds = 5 + Math.floor(Math.random() * 5);
+      const randomDegrees = Math.floor(Math.random() * 360);
+      const totalRotation = (randomRounds * 360) + randomDegrees;
+
+      wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+      setTimeout(() => {
+        const c = gameState.selectedCountry;
+        document.getElementById('country-name').innerText = c.name;
+        document.getElementById('indep-year').innerText = c.year;
+        document.getElementById('rival-name').innerText = c.rival;
+        document.getElementById('country-story').innerText = c.story;
+        document.getElementById('history-card').classList.add('active');
+      }, 5000);
+    }
+
+    function goToArmory() {
+      // Sorteia 2 armas pro player e 2 pra CPU
+      let pool = [...weaponTypes];
+      pool.sort(() => Math.random() - 0.5);
+      gameState.playerWeapons = [pool[0], pool[1]];
+      gameState.cpuWeapons = [pool[2], pool[3]];
+
+      // CPU coloca automaticamente suas cartas
+      let availableSlots = [0, 1, 2, 3, 4].sort(() => Math.random() - 0.5);
+      gameState.cpuWeaponSlots[availableSlots[0]] = gameState.cpuWeapons[0];
+      gameState.cpuWeaponSlots[availableSlots[1]] = gameState.cpuWeapons[1];
+      gameState.cpuSlots.sort(() => Math.random() - 0.5);
+
+      renderArmory();
+      showScreen('screen-positioning');
+    }
+
+    function renderArmory() {
+      const wContainer = document.getElementById('player-weapons');
+      wContainer.innerHTML = '';
+      gameState.playerWeapons.forEach((w, idx) => {
+        const div = document.createElement('div');
+        div.className = `weapon-card ${gameState.selectedWeaponIndex === idx ? 'selected' : ''} ${w.used ? 'used' : ''}`;
+        div.innerHTML = `<div class="weapon-icon">${w.icon}</div><div class="weapon-name">${w.name}</div><div class="weapon-effect">${w.effect}</div>`;
+        div.onclick = () => {
+          if (!w.used) {
+            gameState.selectedWeaponIndex = (gameState.selectedWeaponIndex === idx) ? null : idx;
+            renderArmory();
+          }
+        };
+        wContainer.appendChild(div);
+      });
+
+      const dock = document.getElementById('soldiers-dock');
+      dock.innerHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        const chip = document.createElement('div');
+        chip.className = `soldier-chip ${gameState.dockUsed[i-1] ? 'used' : ''}`;
+        chip.innerText = i;
+        chip.onclick = () => placeSoldier(i);
+        dock.appendChild(chip);
+      }
+
+      renderSlots();
+    }
+
+    function placeSoldier(val) {
+      if (gameState.dockUsed[val-1]) return;
+      let emptyIdx = gameState.playerSlots.indexOf(null);
+      if (emptyIdx !== -1) {
+        gameState.playerSlots[emptyIdx] = val;
+        gameState.dockUsed[val-1] = true;
+        renderArmory();
+      }
+    }
+
+    function placeOnSlot(slotIdx) {
+      // Se tiver uma arma selecionada, equipa no slot
+      if (gameState.selectedWeaponIndex !== null) {
+        let w = gameState.playerWeapons[gameState.selectedWeaponIndex];
+        gameState.playerWeaponSlots[slotIdx] = w;
+        w.used = true;
+        gameState.selectedWeaponIndex = null;
+        renderArmory();
+        return;
+      }
+
+      // Se clicar para remover soldado
+      if (gameState.playerSlots[slotIdx] !== null) {
+        let val = gameState.playerSlots[slotIdx];
+        gameState.playerSlots[slotIdx] = null;
+        gameState.dockUsed[val-1] = false;
+        renderArmory();
+      }
+    }
+
+    function renderSlots() {
+      for (let i = 0; i < 5; i++) {
+        const slotEl = document.querySelectorAll('#player-slots .slot')[i];
+        let pVal = gameState.playerSlots[i];
+        let wVal = gameState.playerWeaponSlots[i];
+
+        let html = '';
+        if (pVal !== null) {
+          slotEl.classList.add('filled');
+          html += `<span class="soldier-badge">${pVal}</span>`;
+        } else {
+          slotEl.classList.remove('filled');
+          html += `<span style="color:#64748b;">${i+1}º</span>`;
+        }
+
+        if (wVal) {
+          html += `<div class="weapon-badge">${wVal.icon} ${wVal.name}</div>`;
+        }
+        slotEl.innerHTML = html;
+      }
+
+      const allFilled = !gameState.playerSlots.includes(null);
+      document.getElementById('start-battle-btn').style.display = allFilled ? 'inline-block' : 'none';
+    }
+
+    function startBattle() {
+      showScreen('screen-battle');
+      const board = document.getElementById('battle-board');
+      board.innerHTML = '';
+
+      let pWins = 0;
+      let cpuWins = 0;
+
+      for (let i = 0; i < 5; i++) {
+        let pBase = gameState.playerSlots[i];
+        let cBase = gameState.cpuSlots[i];
+
+        let pWeapon = gameState.playerWeaponSlots[i];
+        let cWeapon = gameState.cpuWeaponSlots[i];
+
+        let pScore = pBase;
+        let cScore = cBase;
+
+        // Aplica Debuffs (Metralhadora)
+        if (pWeapon && pWeapon.id === 'metralhadora') cScore += pWeapon.val;
+        if (cWeapon && cWeapon.id === 'metralhadora') pScore += cWeapon.val;
+
+        // Aplica Buffs (Lança, Pistola)
+        if (pWeapon && pWeapon.type === 'buff') pScore += pWeapon.val;
+        if (cWeapon && cWeapon.type === 'buff') cScore += cWeapon.val;
+
+        let resultText = "";
+        let winnerClass = "";
+
+        // Regra da AK-47 (Vitória Direta)
+        if (pWeapon && pWeapon.id === 'ak47' && (!cWeapon || cWeapon.id !== 'ak47')) {
+          pWins++;
+          resultText = "Jogador Vence (AK-47)!";
+          winnerClass = "winner";
+        } else if (cWeapon && cWeapon.id === 'ak47' && (!pWeapon || pWeapon.id !== 'ak47')) {
+          cpuWins++;
+          resultText = "CPU Vence (AK-47)!";
+          winnerClass = "loser";
+        } else {
+          // Duelo Padrão por Pontos
+          if (pScore > cScore) {
+            pWins++;
+            resultText = "Jogador Vence!";
+            winnerClass = "winner";
+          } else if (cScore > pScore) {
+            cpuWins++;
+            resultText = "CPU Vence!";
+            winnerClass = "loser";
+          } else {
+            // Empate na pontuação final: Sorteio
+            if (Math.random() > 0.5) {
+              pWins++;
+              resultText = "Empate (Sorteio: Jogador)!";
+              winnerClass = "winner";
+            } else {
+              cpuWins++;
+              resultText = "Empate (Sorteio: CPU)!";
+              winnerClass = "loser";
+            }
+          }
+        }
+
+        const row = document.createElement('div');
+        row.className = 'battle-row';
+        row.innerHTML = `
+          <div class="battle-card player">
+            <span style="font-size:0.8rem; color:var(--text-muted);">Você</span>
+            <span style="font-size:1.4rem; font-weight:bold;">${pBase}</span>
+            <span style="font-size:0.75rem;">${pWeapon ? pWeapon.icon + ' ' + pWeapon.name : 'Sem arma'}</span>
+            <span style="font-size:0.85rem; color:var(--accent-gold); margin-top:2px;">Tot: ${pScore}</span>
+          </div>
+          <span class="vs-badge">VS</span>
+          <div class="battle-card cpu">
+            <span style="font-size:0.8rem; color:var(--text-muted);">CPU</span>
+            <span style="font-size:1.4rem; font-weight:bold;">${cBase}</span>
+            <span style="font-size:0.75rem;">${cWeapon ? cWeapon.icon + ' ' + cWeapon.name : 'Sem arma'}</span>
+            <span style="font-size:0.85rem; color:var(--accent-gold); margin-top:2px;">Tot: ${cScore}</span>
+          </div>
+          <div class="result-text ${winnerClass}">${resultText}</div>
+        `;
+        board.appendChild(row);
+      }
+
+      const scoreText = document.getElementById('final-score-text');
+      if (pWins > cpuWins) {
+        scoreText.innerText = `Vitória! Você eliminou ${pWins} soldados e conquistou a Independência!`;
+        scoreText.style.color = "var(--accent-green)";
+      } else if (cpuWins > pWins) {
+        scoreText.innerText = `Derrota! A CPU venceu ${cpuWins} duelos. Tente novamente!`;
+        scoreText.style.color = "var(--accent-red)";
+      } else {
+        scoreText.innerText = `Empate geral! O conflito terminou equilibrado.`;
+        scoreText.style.color = "var(--accent-gold)";
+      }
+
+      document.getElementById('final-result-card').style.display = 'block';
+    }
+
+    function resetGame() {
+      gameState = {
+        selectedCountry: null,
+        playerWeapons: [],
+        cpuWeapons: [],
+        playerSlots: [null, null, null, null, null],
+        playerWeaponSlots: [null, null, null, null, null],
+        cpuSlots: [1, 2, 3, 4, 5],
+        cpuWeaponSlots: [null, null, null, null, null],
+        selectedWeaponIndex: null,
+        dockUsed: [false, false, false, false, false]
+      };
+      showScreen('screen-start');
+    }
+  </script>
+</body>
+</html> 
